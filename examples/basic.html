@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NavTalk JS SDK Demo</title>
+</head>
+<body>
+  <script src="../dist/navtalk-web-sdk.umd.js"></script>
+
+  <my-navtalk-component
+    id="navtalk"
+    license="sk_navtalk_S1r7VnJ0iQ9AHbJMYErhBgbDSUl2zQ1s"
+    character-id="faab967a08e1731076b39edd9538636f"
+    style="width:320px;height:600px;left:100px;top:100px;position:fixed;"
+    function-calls = '[
+      {
+        "function_call_name": "function_call_close_talk",
+        "function_call_description": "当用户想关闭对话时触发这个方法",
+        "function_call_parameters": {
+          "properties": {
+            "userInput": {
+              "type": "string",
+              "description": "用户原始输入内容"
+            }
+          },
+          "required": ["userInput"]
+        }
+      }
+    ]'
+  ></my-navtalk-component>
+
+<script>
+  //本地测试：<script src="../dist/navtalk-web-sdk.umd.js">
+  //ngrok内网穿透测试：https://superboldly-impostrous-jill.ngrok-free.dev/dist/navtalk-web-sdk.umd.js
+  //公司官网正式线上测试：
+  
+  const navtalkElement = document.querySelector("#navtalk");
+  navtalkElement.addEventListener("sdkFuncationCall", function (event) {
+    const detail = event.detail;
+    const functionName = detail.raw_data.name;
+    const args = detail.data.arguments;
+    console.log("函数名:", functionName);
+    console.log("参数:", args);
+    if (functionName === "function_call_close_talk") {
+      navtalkElement.clickPlayOrStopButton();
+    }
+  });
+
+</script>
+</body>
+
+
+
+</html>

@@ -1,0 +1,106 @@
+
+/* 页面容器 */
+/*通过id=""绑定该css样式*/
+#app {
+  width: 100%;
+  height: 100%;
+  position: relative;   /* 便于内部元素定位 */
+}
+
+/*聊天窗口容器的样式*/
+/*整体卡片(主容器)*/
+#navatalkCardContainer {
+  position: fixed;
+  width: 300px;
+  height: 570px;
+  display: block;
+  overflow: hidden; 
+  background: linear-gradient(to bottom, #2C2D4B 0%, #1A1A32 100%);
+  border-radius: 18px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.38), 0 4px 16px rgba(0, 0, 0, 0.22);
+}
+/*顶部标题*/
+#navtalkTitle {
+  width: 100%;
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0;
+  padding-top: 10px;
+  line-height: 1.3;
+  text-align: center;
+}
+/*副标题 */
+#navtalkSubtitle {
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #A8A8C0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
+  padding-top: 5px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/*视频/图像区域(主容器)*/
+#navtalkScreenContainer {
+  position: relative;  
+  padding-top: 10px;            /* 相对于上一个控件的顶部距离 */   
+  margin: 0 auto;               /* 水平居中 */   
+  max-width: 270px;             /* 最大宽度 */     
+  aspect-ratio: 9 / 16;         /* 竖屏比例，也可用 3/4，自动计算高度 */        
+  display: block;               /* 子视图布局方式：块堆叠方式 */
+    
+  overflow: hidden;             /* 子视图超出部分也会裁剪 */      
+  background: #1A1A2E;        /* 无画面时的占位色 */
+}
+/*头像背景图片*/
+#avatarImage {
+  width: 100%;  /* 填满容器宽度 */
+  height: 100%; /* 填满容器高度 */
+  object-fit: cover; /* 保持比例裁剪 */
+  position: absolute;  /* 改成绝对定位 */
+  
+  z-index: 1;
+}
+/*RTC视频展示视图*/
+#character-video {
+  position: absolute;  /* 绝对定位覆盖父容器 */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;   /* 保持视频比例并裁切填满 */
+  background-color: transparent;
+  
+  z-index: 2;
+  opacity: 0; /* 先隐藏图片 */
+}
+/*Call按钮*/
+.playButton {
+  position: absolute;
+  bottom: 5px;
+  width: 100px;
+  height: 100px;
+  left: 50%;
+  transform: translateX(-50%);/*向左移动自身宽度的一半*/
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: transparent;
+  border-color: transparent;
+  z-index: 3;
+}
+.playButtonIcon{
+   margin-top: 10px;
+   width: 35px;
+   height: 35px;
+   background-color: transparent;
+}
+.playButtonText {
+  margin-top: 8px;
+  font-size: 17px;
+  color: white;
+  text-align: center;
+}

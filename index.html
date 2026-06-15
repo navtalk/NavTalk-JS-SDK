@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="Images/png" href="public/icon/navtalk-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NavTalk</title>
+    <link rel="stylesheet" href="/src/Style/style.css"/>
+  </head>
+  <body>
+    <div id="app">
+      <div id="navtalkScreenContainer">
+        <img id="avatarImage" src="/public/icon/default_background.png"/>
+        <video id="character-video" class="character-video" autoplay playsinline></video>
+        <button id="playButton" class="playButton">
+          <div class="playButtonIconContainer">
+            <img id="playButtonIcon" class="playButtonIcon" src="/public/icon/call_open.png"/>
+          </div>
+          <span id="playButtonText" class="playButtonText">Call</span>
+        </button>
+      </div>
+    </div>
+    <script type="module" src="/src/index.ts"></script>
+  </body>
+</html>

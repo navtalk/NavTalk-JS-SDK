@@ -1,0 +1,475 @@
+NavTalk JS SDK 开发文档
+生成日期：2026-06-11
+
+一、目标
+
+当前你已经完成了 npm-sdk：navtalk-web-sdk。
+
+现在要基于 npm-sdk 的源码，开发一个相同功能的 JS SDK，让用户可以通过 script 标签直接引入，并使用 Web Component。
+
+目标使用方式：
+
+<script src="https://cdn.xxx.com/navtalk-web-sdk.umd.js"></script>
+
+<my-navtalk-component
+  license="******"
+  character-id="******"
+  style="width:320px;height:600px;left:100px;top:100px;position:fixed;"
+></my-navtalk-component>
+
+核心目标：
+
+1. 用户不需要 npm install
+2. 用户不需要 import
+3. 用户不需要 Vite / Webpack / Rollup 等构建工具
+4. 用户只需要在 HTML 页面中引入一个 JS 文件
+5. JS 文件加载后自动注册 my-navtalk-component
+6. 组件功能与 npm-sdk 保持一致
+
+
+二、整体开发思路
+
+JS SDK 不需要从零开发。
+
+建议从当前 npm-sdk 项目直接复制一份源码，然后调整为浏览器 script 直引版。
+
+当前 npm-sdk 已经具备 JS SDK 所需的大部分基础：
+
+1. 使用 Web Component 封装 UI
+2. 使用 Shadow DOM 隔离样式
+3. src/index.ts 中已经自动注册 my-navtalk-component
+4. Vite 已经可以输出 UMD 构建产物
+5. 核心业务逻辑已经按 Manager 类拆分
+
+因此第一版 JS SDK 的主要工作不是重写功能，而是：
+
+1. 复制当前项目
+2. 调整 package.json
+3. 调整 vite.config.ts
+4. 保留 Web Component 自动注册逻辑
+5. 确认静态资源路径
+6. 增加纯 HTML 示例
+7. 构建 UMD 文件
+8. 上传 dist 到 CDN
+
+
+三、建议目录结构
+
+建议在 3.Web 目录下创建和 npm-sdk 并列的 js-sdk 目录：
+
+3.Web/
+  1.npm-sdk/
+    navtalk-web-sdk/
+  2.js-sdk/
+    navtalk-js-sdk/
+
+复制命令示例：
+
+cp -R /Users/jinfulai/Desktop/NavTalk/3.SDK/3.Web/1.npm-sdk/navtalk-web-sdk \
+      /Users/jinfulai/Desktop/NavTalk/3.SDK/3.Web/2.js-sdk/navtalk-js-sdk
+
+复制后，JS SDK 项目继续保留核心源码：
+
+src/index.ts
+src/SingleClass/NavTalkManager.ts
+src/SingleClass/WebSocketManager.ts
+src/SingleClass/WebRTCManager.ts
+src/SingleClass/AudioManager.ts
+src/SingleClass/NotificationManager.ts
+src/Style/style.css
+src/assets/*
+
+这些文件是 SDK 的核心业务逻辑，第一版不建议大改。
+
+
+四、修改 package.json
+
+当前 npm-sdk 的 package.json 更偏向 npm 包发布：
+
+{
+  "name": "navtalk-web-sdk",
+  "version": "0.0.13",
+  "main": "dist/navtalk-web-sdk.umd.js",
+  "module": "dist/navtalk-web-sdk.es.js",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+
+JS SDK 主要用于 CDN / 静态文件分发，不再重点依赖 main、module、types。
+
+建议改成：
+
+{
+  "name": "navtalk-js-sdk",
+  "version": "0.0.13",
+  "description": "Browser script SDK for NavTalk.",
+  "type": "module",
+  "files": ["dist"],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+
+说明：
+
+1. name 改成 navtalk-js-sdk，用来区分 npm-sdk
+2. version 可以先和 npm-sdk 保持一致
+3. build 仍然使用 vite build
+4. 如果暂时不发布 npm，可以不关心 main/module/types
+5. 如果后续也想把 JS SDK 项目发布为 npm 包，可以再补 main/module/types
+
+
+五、修改 vite.config.ts
+
+当前 npm-sdk 的 vite.config.ts 类似：
+
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  build: {
+    lib: {
+      entry: "src/index.ts",
+      name: "MyNavTalkSDK",
+      fileName: (format) => `navtalk-web-sdk.${format}.js`
+    },
+    rollupOptions: {
+      external: [],
+      output: {
+        globals: {}
+      }
+    }
+  }
+});
+
+为了匹配 JS SDK 的目标使用方式：
+
+<script src="https://cdn.xxx.com/navtalk-web-sdk.umd.js"></script>
+
+建议改成只输出 UMD 文件：
+
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  build: {
+    lib: {
+      entry: "src/index.ts",
+      name: "NavTalkSDK",
+      formats: ["umd"],
+      fileName: () => "navtalk-web-sdk.umd.js"
+    },
+    rollupOptions: {
+      external: [],
+      output: {
+        globals: {}
+      }
+    }
+  }
+});
+
+说明：
+
+1. entry 仍然是 src/index.ts
+2. name 建议改成 NavTalkSDK，作为浏览器全局变量名
+3. formats 只保留 umd
+4. fileName 固定为 navtalk-web-sdk.umd.js
+5. 这样构建后的文件名就和 script 引入路径一致
+
+
+六、确认 src/index.ts 自动注册组件
+
+你的当前 src/index.ts 末尾已经有如下逻辑：
+
+if (!customElements.get("my-navtalk-component")) {
+  customElements.define("my-navtalk-component", MyNavTalk)
+}
+
+这段代码非常关键，JS SDK 必须保留。
+
+原因：
+
+1. script 标签加载 JS 后，用户不会手动 import
+2. SDK 必须自己完成 Web Component 注册
+3. 注册后，浏览器才能识别 <my-navtalk-component>
+4. 防止重复注册可以避免多次引入 SDK 时报错
+
+第一版 JS SDK 不建议删除或重构这段逻辑。
+
+
+七、确认资源引用方式
+
+当前 src/index.ts 中有这些资源引用：
+
+import navtalk_off from "./assets/navtalk_off.png"
+import navtalk_on from "./assets/navtalk_on.png"
+import navtalk_connecting from "./assets/navtalk_connecting.png"
+import navtalkStyles from "./Style/style.css?raw"
+import default_avatar from "./assets/default_background.png"
+
+其中：
+
+1. CSS 通过 ?raw 内联进 JS，这对 JS SDK 很友好
+2. 图片资源可能会被 Vite 输出到 dist/assets
+3. 如果图片没有被 base64 内联，那么 CDN 上传时必须同时上传 assets 目录
+
+构建后需要检查 dist 目录：
+
+dist/
+  navtalk-web-sdk.umd.js
+  assets/
+    navtalk_off.xxx.png
+    navtalk_on.xxx.png
+    navtalk_connecting.xxx.png
+    default_background.xxx.png
+
+如果存在 assets 目录，发布 CDN 时不要只上传 JS 文件，而是上传整个 dist 目录。
+
+推荐 CDN 路径结构：
+
+https://cdn.xxx.com/navtalk/js-sdk/0.0.13/navtalk-web-sdk.umd.js
+https://cdn.xxx.com/navtalk/js-sdk/0.0.13/assets/navtalk_off.xxx.png
+https://cdn.xxx.com/navtalk/js-sdk/0.0.13/assets/navtalk_on.xxx.png
+
+如果只上传 navtalk-web-sdk.umd.js，按钮图标或默认头像可能加载失败。
+
+
+八、增加纯 HTML 示例
+
+建议在 JS SDK 项目中新增：
+
+examples/basic.html
+
+内容示例：
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NavTalk JS SDK Demo</title>
+</head>
+<body>
+  <script src="../dist/navtalk-web-sdk.umd.js"></script>
+
+  <my-navtalk-component
+    license="******"
+    character-id="******"
+    style="width:320px;height:600px;left:100px;top:100px;position:fixed;"
+  ></my-navtalk-component>
+</body>
+</html>
+
+注意：
+
+1. license 和 character-id 要替换成真实值
+2. 不建议直接双击打开 HTML 测试完整通话能力
+3. 麦克风和 WebRTC 通常需要 HTTPS 或 localhost
+4. 本地测试建议使用静态服务器
+
+
+九、本地构建和测试
+
+进入 JS SDK 项目目录：
+
+cd /Users/jinfulai/Desktop/NavTalk/3.SDK/3.Web/2.js-sdk/navtalk-js-sdk
+
+安装依赖：
+
+npm install
+
+构建：
+
+npm run build
+
+检查 dist：
+
+dist/navtalk-web-sdk.umd.js
+
+如果有 assets 目录，也要确认图片存在。
+
+本地测试可以使用：
+
+npm run preview
+
+或使用任意静态服务工具启动 examples/basic.html。
+
+测试重点：
+
+1. 页面是否成功加载 navtalk-web-sdk.umd.js
+2. 浏览器 Console 是否有报错
+3. customElements.get("my-navtalk-component") 是否有值
+4. 页面是否渲染出 NavTalk 组件
+5. 默认头像和按钮图标是否正常显示
+6. license 缺失时是否正常提示错误
+7. character-id 或 character-name 缺失时是否正常提示错误
+8. 点击 Call 后是否开始连接 WebSocket
+9. WebRTC 视频是否可以正常显示
+10. Function Call 是否能通过 sdkFuncationCall 事件抛出
+
+
+十、CDN 发布方式
+
+构建完成后，建议把整个 dist 目录上传到 CDN。
+
+推荐路径：
+
+/navtalk/js-sdk/0.0.13/
+  navtalk-web-sdk.umd.js
+  assets/
+
+对应访问地址：
+
+https://cdn.xxx.com/navtalk/js-sdk/0.0.13/navtalk-web-sdk.umd.js
+
+用户最终使用：
+
+<script src="https://cdn.xxx.com/navtalk/js-sdk/0.0.13/navtalk-web-sdk.umd.js"></script>
+
+<my-navtalk-component
+  license="******"
+  character-id="******"
+  style="width:320px;height:600px;left:100px;top:100px;position:fixed;"
+></my-navtalk-component>
+
+生产环境建议使用固定版本路径，不建议直接使用 latest：
+
+推荐：
+
+https://cdn.xxx.com/navtalk/js-sdk/0.0.13/navtalk-web-sdk.umd.js
+
+不推荐：
+
+https://cdn.xxx.com/navtalk/js-sdk/latest/navtalk-web-sdk.umd.js
+
+原因：
+
+1. 固定版本更稳定
+2. 用户线上页面不会被自动升级影响
+3. 出问题时方便回滚和排查
+
+
+十一、JS SDK 第一版不建议做的大改动
+
+第一版建议保持简单，不建议一开始就做这些大改：
+
+1. 不建议重写业务逻辑
+2. 不建议改掉 Web Component 方案
+3. 不建议马上改标签名
+4. 不建议马上设计复杂的 NavTalk.init API
+5. 不建议拆分多个入口文件
+6. 不建议引入新的依赖库
+7. 不建议改变现有参数命名
+
+原因：
+
+1. 当前 npm-sdk 已经可以自然转成 JS SDK
+2. 复用源码可以保证两个 SDK 功能一致
+3. 改动越小，发布风险越低
+4. 用户文档也可以复用大部分内容
+
+
+十二、后续可选优化
+
+第一版稳定后，可以考虑增加：
+
+1. 单文件版本
+
+把图片资源转成 base64，做到只发布一个 navtalk-web-sdk.umd.js。
+
+优点：
+
+- 用户只需要引入一个 JS 文件
+- CDN 发布更简单
+- 不容易出现图片路径问题
+
+缺点：
+
+- JS 文件体积会变大
+
+2. 全局 API
+
+在 window 上暴露 NavTalkSDK，例如：
+
+window.NavTalkSDK = {
+  version: "0.0.13"
+}
+
+后续可以扩展：
+
+NavTalkSDK.create(...)
+NavTalkSDK.destroy(...)
+NavTalkSDK.version
+
+3. 更正式的组件标签名
+
+当前标签名：
+
+my-navtalk-component
+
+后续可以考虑增加：
+
+navtalk-widget
+
+为了兼容老用户，可以同时注册两个标签：
+
+my-navtalk-component
+navtalk-widget
+
+4. 增加 JS SDK 专用文档
+
+建议新增：
+
+README-js-sdk.md
+examples/basic.html
+examples/function-call.html
+examples/custom-ui.html
+
+5. 增加错误提示和调试模式
+
+例如：
+
+debug="true"
+
+或：
+
+window.NavTalkSDK_DEBUG = true
+
+
+十三、最终执行清单
+
+1. 复制 npm-sdk 项目到 2.js-sdk/navtalk-js-sdk
+2. 修改 package.json 的 name 和 description
+3. 修改 vite.config.ts，只输出 navtalk-web-sdk.umd.js
+4. 保留 src/index.ts 中 customElements.define 注册逻辑
+5. 构建 npm run build
+6. 检查 dist/navtalk-web-sdk.umd.js 是否存在
+7. 检查 dist/assets 是否需要一起上传
+8. 新增 examples/basic.html
+9. 使用 localhost 测试 script 直引
+10. 确认组件渲染、图片加载、WebSocket、WebRTC、Function Call 都正常
+11. 上传整个 dist 到 CDN
+12. 在用户文档中提供 script + my-navtalk-component 使用示例
+
+
+十四、结论
+
+NavTalk JS SDK 的第一版应该基于当前 npm-sdk 直接复制和轻量改造。
+
+最小可行版本只需要完成：
+
+1. 复制源码
+2. 改 Vite 构建配置
+3. 输出 UMD 文件
+4. 上传 dist 到 CDN
+5. 给用户 script 标签示例
+
+由于当前 npm-sdk 已经使用 Web Component，并且已经自动注册 my-navtalk-component，所以它天然适合扩展成 script 直引版 JS SDK。
+
+建议先不要大改架构，先完成可发布、可测试、可接入的 JS SDK 第一版。

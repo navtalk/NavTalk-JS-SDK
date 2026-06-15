@@ -1,0 +1,12 @@
+{
+  "name": "navtalk-js-sdk",
+  "version": "0.0.13",
+  "description": "A js SDK for NavTalk, a conversational AI platform.",
+  "type": "module",
+  "files": [ "dist" ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
