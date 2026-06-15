@@ -15,7 +15,7 @@ The SDK provides the following features:
 ## Installation
 Load the SDK in your HTML page:
 ```html
-  <script src="https://navtalk.ai/sdk/js/0.0.13/navtalk-web-sdk.umd.js"></script>
+  <script src="https://sdk.navtalk.ai/0.0.13/navtalk-web-sdk.umd.js"></script>
 ```
 
 ## Quick Start
