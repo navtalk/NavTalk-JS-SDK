@@ -21,7 +21,7 @@ Load the SDK in your HTML page:
 ## Quick Start
 ```html
 <body>
-  <script src="../dist/navtalk-web-sdk.umd.js"></script>
+  <script src="https://sdk.navtalk.ai/0.0.13/navtalk-web-sdk.umd.js"></script>
   <my-navtalk-component
     id="navtalk"
     license="******"
